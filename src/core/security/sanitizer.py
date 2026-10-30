@@ -89,4 +89,13 @@ class DataSanitizer:
         if incident.ai_analysis:
             clean_dict["ai_analysis"] = cls.sanitize_text(incident.ai_analysis)
 
+        # Sanitize evidence for external chat dispatch (Pointer Pattern)
+        if incident.evidence:
+            clean_evidence = incident.evidence.model_dump()
+            if incident.evidence.source_ip:
+                clean_evidence["source_ip"] = "[IP_REGISTRADA_EN_EXPEDIENTE_ANCI]"
+            if incident.evidence.raw_payload_snippet:
+                clean_evidence["raw_payload_snippet"] = cls.sanitize_text(incident.evidence.raw_payload_snippet)
+            clean_dict["evidence"] = clean_evidence
+
         return Incident(**clean_dict)

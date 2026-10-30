@@ -44,6 +44,14 @@ class DiscordChannel(NotificationChannel):
             fields.append({"name": "Latency", "value": f"`{incident.response_time_ms} ms`", "inline": True})
         if incident.endpoint:
             fields.append({"name": "Endpoint", "value": f"`{incident.endpoint}`", "inline": False})
+        if incident.evidence and incident.evidence.source_ip:
+            fields.append({"name": "Source IP", "value": f"`{incident.evidence.source_ip}`", "inline": True})
+        if incident.evidence and incident.evidence.attack_vector:
+            fields.append({"name": "Attack Vector", "value": f"`{incident.evidence.attack_vector}`", "inline": True})
+        if incident.evidence and incident.evidence.clarity_session_url:
+            fields.append({"name": "🎥 Microsoft Clarity Session", "value": f"[Ver Grabación en Clarity]({incident.evidence.clarity_session_url})", "inline": False})
+        if incident.dossier_url:
+            fields.append({"name": "🛡️ Expediente ANCI / CSIRT", "value": f"[Descargar Dossier Oficial (Ley 21.663)]({incident.dossier_url})", "inline": False})
         if incident.ai_analysis:
             fields.append({"name": "🤖 AI Incident Analysis", "value": incident.ai_analysis, "inline": False})
 

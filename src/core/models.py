@@ -11,6 +11,19 @@ class AlertSeverity(str, Enum):
     RESOLVED = "RESOLVED"
 
 
+class IncidentEvidence(BaseModel):
+    """
+    Forensic evidence vault model compliant with Chilean Ley 21.663.
+    Preserves raw forensics (attacker IP, vector, payload, Clarity links)
+    for official ANCI/CSIRT reporting while keeping chat alerts sanitized.
+    """
+    source_ip: Optional[str] = None
+    attack_vector: Optional[str] = None
+    raw_payload_snippet: Optional[str] = None
+    clarity_session_url: Optional[str] = None
+    integrity_hash: Optional[str] = None
+
+
 class Incident(BaseModel):
     id: str
     service_name: str
@@ -23,6 +36,8 @@ class Incident(BaseModel):
     endpoint: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
     ai_analysis: Optional[str] = None
+    evidence: Optional[IncidentEvidence] = None
+    dossier_url: Optional[str] = None
 
 
 class ClarityMetrics(BaseModel):

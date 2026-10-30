@@ -52,6 +52,14 @@ class TelegramChannel(NotificationChannel):
             msg_lines.append(f"<b>Latency:</b> <code>{incident.response_time_ms} ms</code>")
         if incident.endpoint:
             msg_lines.append(f"<b>Endpoint:</b> <code>{html.escape(incident.endpoint)}</code>")
+        if incident.evidence and incident.evidence.source_ip:
+            msg_lines.append(f"<b>Source IP:</b> <code>{html.escape(incident.evidence.source_ip)}</code>")
+        if incident.evidence and incident.evidence.attack_vector:
+            msg_lines.append(f"<b>Vector:</b> <code>{html.escape(incident.evidence.attack_vector)}</code>")
+        if incident.evidence and incident.evidence.clarity_session_url:
+            msg_lines.append(f'🎥 <a href="{html.escape(incident.evidence.clarity_session_url)}">Ver Sesión en Microsoft Clarity</a>')
+        if incident.dossier_url:
+            msg_lines.append(f'🛡️ <a href="{html.escape(incident.dossier_url)}">Descargar Expediente ANCI / CSIRT (Ley 21.663)</a>')
         if incident.ai_analysis:
             msg_lines.append("")
             msg_lines.append(f"🤖 <b>AI Diagnostic:</b> <i>{html.escape(incident.ai_analysis)}</i>")

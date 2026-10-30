@@ -36,12 +36,16 @@ class WhatsAppChannel(NotificationChannel):
             return False
 
         message_body = (
-            f"🚨 *[OpsSentinel] {incident.severity.value}: {incident.service_name}*\n\n"
+            f"🚨 *[GMA-DEV] {incident.severity.value}: {incident.service_name}*\n\n"
             f"{incident.title}\n"
             f"Details: {incident.description}\n"
             f"Status: {incident.status_code or 'N/A'} | Latency: {incident.response_time_ms or 0}ms\n"
-            f"Ref ID: {incident.id}"
         )
+        if incident.evidence and incident.evidence.source_ip:
+            message_body += f"Origen: {incident.evidence.source_ip}\n"
+        if incident.dossier_url:
+            message_body += f"Expediente ANCI: {incident.dossier_url}\n"
+        message_body += f"Ref ID: {incident.id}"
 
         if self.provider == "meta":
             return await self._send_via_meta_cloud_api(message_body, incident)

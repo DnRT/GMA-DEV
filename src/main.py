@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Query
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.config import settings
@@ -44,21 +44,29 @@ scheduler = AsyncIOScheduler()
 async def process_and_dispatch_incident(raw_incident: Incident):
     """
     Central Pipeline:
-    1. Mandatory PII Sanitization (Ley de Datos & GDPR)
-    2. Audit Logging (Ley 21.663)
-    3. Plugin Lifecycle (e.g. AI Enrichment)
-    4. Multi-channel broadcast (Discord, Telegram, WhatsApp)
+    1. Preserve raw forensic evidence (unmasked IP, vectors, payloads) for ANCI vault
+    2. Mandatory PII Sanitization for ChatOps (Ley de Datos & GDPR)
+    3. Audit Logging (Immutable UTC with SHA-256 integrity hash)
+    4. Plugin Lifecycle (e.g. AI Enrichment)
+    5. Multi-channel broadcast (Discord, Telegram, WhatsApp) with secure pointers
     """
-    # 1. Sanitize
+    # 1. Preserve raw forensic evidence
+    raw_evidence = raw_incident.evidence
+
+    # Attach official dossier link if not specified
+    if not raw_incident.dossier_url:
+        raw_incident.dossier_url = f"/api/v1/incidents/{raw_incident.id}/anci-dossier"
+
+    # 2. Sanitize for external ChatOps dispatch
     clean_incident = DataSanitizer.sanitize_incident(raw_incident) if settings.MASK_PII_ENABLED else raw_incident
 
-    # 2. Audit Trail (Immutable UTC)
-    audit_logger.record_incident(clean_incident)
+    # 3. Audit Trail & Forensic Vault (Immutable UTC + Raw Forensic Evidence)
+    audit_logger.record_incident(clean_incident, raw_evidence=raw_evidence)
 
-    # 3. Plugins Enrichment (e.g. Ollama / Gemini / OpenAI)
+    # 4. Plugins Enrichment (e.g. Ollama / Gemini / OpenAI)
     enriched_incident = await plugin_manager.apply_incident_post_sanitize(clean_incident)
 
-    # 4. Dispatch to all active channels concurrently
+    # 5. Dispatch to all active channels concurrently
     tasks = [channel.send_incident(enriched_incident) for channel in active_channels]
     if tasks:
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -174,6 +182,55 @@ async def trigger_manual_report(background_tasks: BackgroundTasks):
     """Manually triggers the daily health and statistics report."""
     background_tasks.add_task(generate_and_dispatch_periodic_report)
     return {"status": "report_triggered"}
+
+
+@app.get("/api/v1/incidents/{incident_id}/anci-dossier", tags=["Compliance & CSIRT"])
+async def get_anci_incident_dossier(incident_id: str, token: str = Query(None)):
+    """
+    Secure endpoint providing the full, unredacted forensic incident dossier
+    mandated by Chilean Ley 21.663 for formal reporting to ANCI and CSIRT.
+    Contains raw attacker IP, attack vector, timestamps, evidence hash, and Clarity URLs.
+    """
+    if settings.WEBHOOK_SECRET and token != settings.WEBHOOK_SECRET:
+        # In production with secret configured, require valid authorization token
+        raise HTTPException(status_code=403, detail="Acceso denegado: Token de seguridad invalido para acceder a la boveda forense")
+
+    dossier = audit_logger.get_incident_dossier(incident_id)
+    if not dossier:
+        raise HTTPException(status_code=404, detail=f"Incidente {incident_id} no encontrado en la boveda forense")
+
+    evidence = dossier.get("evidence") or {}
+
+    # Formal ANCI / CSIRT Technical Dossier Structure
+    return {
+        "ley_21663_compliance": {
+            "estado": "EXPEDIENTE_FORENSE_VALIDADO",
+            "autoridad_destinataria": "Agencia Nacional de Ciberseguridad (ANCI) / CSIRT Nacional",
+            "plazo_notificacion_legal": "3 horas (preliminar) / 72 horas (definitivo)",
+            "integridad_evidencia_sha256": dossier.get("entry_sha256")
+        },
+        "identificacion_incidente": {
+            "id_interno": dossier.get("incident_id"),
+            "servicio_afectado": dossier.get("service_name"),
+            "severidad": dossier.get("severity"),
+            "titulo": dossier.get("title"),
+            "descripcion": dossier.get("description"),
+            "marca_temporal_utc": dossier.get("timestamp"),
+            "endpoint_afectado": dossier.get("endpoint")
+        },
+        "evidencia_tecnica_forense": {
+            "ip_origen_atacante": evidence.get("source_ip", "No registrada / Ataque distribuido"),
+            "vector_ataque": evidence.get("attack_vector", "Desconocido"),
+            "fragmento_payload": evidence.get("raw_payload_snippet"),
+            "enlace_grabacion_clarity": evidence.get("clarity_session_url"),
+            "codigo_respuesta_http": dossier.get("status_code"),
+            "tiempo_respuesta_ms": dossier.get("response_time_ms")
+        },
+        "acciones_inmediatas_registradas": {
+            "accion_sistema": dossier.get("action"),
+            "canales_notificados": [c.name for c in active_channels]
+        }
+    }
 
 
 if __name__ == "__main__":

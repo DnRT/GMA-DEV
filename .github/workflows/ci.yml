@@ -28,6 +28,7 @@ jobs:
       - name: Run Privacy & Sanitizer Unit Tests (Ley 21.663 & GDPR)
         run: |
           python tests/test_sanitizer.py
+          python tests/test_anci_vault.py
 
   docker-build:
     name: Docker Build & Non-Root Verification

@@ -2,7 +2,7 @@ import httpx
 import logging
 from typing import Optional
 from datetime import datetime, timezone
-from src.core.models import ClarityMetrics, Incident, AlertSeverity
+from src.core.models import ClarityMetrics, Incident, AlertSeverity, IncidentEvidence
 from src.config import settings
 
 logger = logging.getLogger("ClaritySource")
@@ -87,6 +87,10 @@ class ClarityClient:
                     "rage_clicks": metrics.rage_clicks,
                     "dead_clicks": metrics.dead_clicks,
                     "js_errors": metrics.js_errors
-                }
+                },
+                evidence=IncidentEvidence(
+                    attack_vector="Client-Side Exception / UX Rage Clicks Spike",
+                    clarity_session_url=f"https://clarity.ms/projects/view/{self.project_id}/dashboard"
+                )
             )
         return None
