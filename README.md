@@ -69,6 +69,7 @@ Para facilitar la adopción e implementación en cualquier entorno, la documenta
 | **Amazon Web Services (AWS)** | [Despliegue en AWS con Terraform](docs/cloud/aws-deployment.md) | Despliegue en AWS ECS Fargate con Secrets Manager y roles IAM de mínimo privilegio. |
 | **Microsoft Azure** | [Despliegue en Azure](docs/cloud/azure-deployment.md) | Despliegue en Azure Container Apps con Log Analytics y variables protegidas. |
 | **Extensibilidad & IA** | [Plugins & Enriquecimiento IA](docs/extensibility/plugins-and-ai.md) | Creación de plugins personalizados e integración con Ollama (offline), Gemini o OpenAI. |
+| **Dossiers Oficiales & Reportes** | [Expedientes ANCI & Post-Mortems (PDF/MD)](dossiers/) | Plantillas y ejemplos generados en PDF/MD para notificación formal a ANCI/CSIRT (Ley 21.663), RCA de caídas y reportes de Clarity. |
 | **Marco Legal & Seguridad** | [Seguridad y Cumplimiento Normativo](SECURITY.md) | Detalle de cumplimiento con Ley 21.663, Ley 21.459 y estándares GDPR. |
 
 ---
