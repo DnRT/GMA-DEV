@@ -60,7 +60,7 @@ def scenario_security():
             "source_ip": "185.220.101.5",
             "attack_vector": "SQL Injection / Auth Bypass",
             "raw_payload_snippet": "admin' OR 1=1 --",
-            "clarity_session_url": "https://clarity.ms/projects/view/w13cujuo4o/impressions/demo-attack-session"
+            "clarity_session_url": "https://clarity.microsoft.com/projects/view/w13cujuo4o/recordings"
         }
     }
     send_incident(payload, "3. Incidente de Ciberseguridad (IP enmascarada + Boveda ANCI Ley 21.663)")
@@ -77,7 +77,7 @@ def scenario_clarity_ux():
         "endpoint": "https://tuempresa.cl/carro-compras",
         "evidence": {
             "attack_vector": "Frontend UX Friction / Unresponsive UI",
-            "clarity_session_url": "https://clarity.ms/projects/view/w13cujuo4o/dashboard"
+            "clarity_session_url": "https://clarity.microsoft.com/projects/view/w13cujuo4o/dashboard"
         },
         "metadata": {
             "rage_clicks": 42,

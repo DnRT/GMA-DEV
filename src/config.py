@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     # Server
     PORT: int = 8080
     HOST: str = "0.0.0.0"
+    PUBLIC_BASE_URL: str = "http://localhost:8080"
     WEBHOOK_SECRET: Optional[str] = None
 
     # Discord

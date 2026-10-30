@@ -3,13 +3,14 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Query, Response
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.config import settings
 from src.core.models import Incident, ReportSummary, AlertSeverity
 from src.core.security.sanitizer import DataSanitizer
 from src.core.audit.audit_logger import audit_logger
+from src.core.reporting.pdf_generator import generate_pdf_for_incident
 from src.integrations.sources.healthcheck import HealthcheckMonitor
 from src.integrations.sources.clarity import ClarityClient
 from src.integrations.channels.base import NotificationChannel
@@ -53,9 +54,9 @@ async def process_and_dispatch_incident(raw_incident: Incident):
     # 1. Preserve raw forensic evidence
     raw_evidence = raw_incident.evidence
 
-    # Attach official dossier link if not specified
+    # Attach official PDF dossier link if not specified
     if not raw_incident.dossier_url:
-        raw_incident.dossier_url = f"/api/v1/incidents/{raw_incident.id}/anci-dossier"
+        raw_incident.dossier_url = f"{settings.PUBLIC_BASE_URL.rstrip('/')}/api/v1/incidents/{raw_incident.id}/dossier.pdf"
 
     # 2. Sanitize for external ChatOps dispatch
     clean_incident = DataSanitizer.sanitize_incident(raw_incident) if settings.MASK_PII_ENABLED else raw_incident
@@ -253,6 +254,35 @@ async def get_anci_incident_dossier(incident_id: str, token: str = Query(None)):
             "canales_notificados": [c.name for c in active_channels]
         }
     }
+
+
+@app.get("/api/v1/incidents/{incident_id}/dossier.pdf", tags=["Compliance & CSIRT"])
+async def get_incident_dossier_pdf(incident_id: str):
+    """
+    Renders and delivers the official incident dossier as a formatted PDF
+    directly in the browser. Clickable from Discord, Telegram, or email.
+    """
+    dossier = audit_logger.get_incident_dossier(incident_id)
+    if not dossier:
+        dossier = {
+            "incident_id": incident_id,
+            "title": f"Incidente {incident_id}",
+            "description": "Registro en proceso de consolidacion.",
+            "service_name": "GMA-DEV Core"
+        }
+
+    try:
+        pdf_bytes = generate_pdf_for_incident(dossier)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"inline; filename=DOSSIER-{incident_id}.pdf"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error compiling PDF for incident {incident_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generando PDF: {str(e)}")
 
 
 if __name__ == "__main__":

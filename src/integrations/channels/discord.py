@@ -51,7 +51,8 @@ class DiscordChannel(NotificationChannel):
         if incident.evidence and incident.evidence.clarity_session_url:
             fields.append({"name": "🎥 Microsoft Clarity Session", "value": f"[Ver Grabación en Clarity]({incident.evidence.clarity_session_url})", "inline": False})
         if incident.dossier_url:
-            fields.append({"name": "🛡️ Expediente ANCI / CSIRT", "value": f"[Descargar Dossier Oficial (Ley 21.663)]({incident.dossier_url})", "inline": False})
+            full_dossier_url = incident.dossier_url if incident.dossier_url.startswith("http") else f"{settings.PUBLIC_BASE_URL.rstrip('/')}/{incident.dossier_url.lstrip('/')}"
+            fields.append({"name": "🛡️ Expediente Oficial (PDF)", "value": f"[Ver / Descargar Dossier PDF]({full_dossier_url})", "inline": False})
         if incident.ai_analysis:
             fields.append({"name": "🤖 AI Incident Analysis", "value": incident.ai_analysis, "inline": False})
 
@@ -62,12 +63,12 @@ class DiscordChannel(NotificationChannel):
             "fields": fields,
             "timestamp": incident.timestamp.isoformat(),
             "footer": {
-                "text": f"OpsSentinel • Incident ID: {incident.id} • Ley 21.663 Compliant"
+                "text": f"GMA-DEV • Incident ID: {incident.id} • Ley 21.663 Compliant"
             }
         }
 
         payload = {
-            "username": "OpsSentinel AlertManager",
+            "username": "GMA-DEV AlertManager",
             "embeds": [embed]
         }
 
@@ -110,12 +111,12 @@ class DiscordChannel(NotificationChannel):
             "color": 3066993 if report.critical_incidents == 0 else 15964690,
             "fields": fields,
             "timestamp": report.period_end.isoformat(),
-            "footer": {"text": "OpsSentinel Periodic System Health Report"}
+            "footer": {"text": "GMA-DEV Periodic System Health Report"}
         }
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                res = await client.post(self.webhook_url, json={"username": "OpsSentinel Reporter", "embeds": [embed]})
+                res = await client.post(self.webhook_url, json={"username": "GMA-DEV Reporter", "embeds": [embed]})
                 return res.status_code in [200, 204]
         except Exception as e:
             logger.error(f"Failed to deliver Discord report: {str(e)}")

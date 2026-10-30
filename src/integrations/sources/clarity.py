@@ -126,7 +126,7 @@ class ClarityClient:
                 },
                 evidence=IncidentEvidence(
                     attack_vector="Client-Side Exception / UX Friction",
-                    clarity_session_url=f"https://clarity.ms/projects/view/{project_id_str}/dashboard"
+                    clarity_session_url=f"https://clarity.microsoft.com/projects/view/{project_id_str}/dashboard"
                 )
             )
         return None
