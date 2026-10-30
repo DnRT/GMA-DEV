@@ -26,7 +26,7 @@ logger = logging.getLogger("OpsSentinel")
 active_channels: List[NotificationChannel] = []
 if settings.DISCORD_ENABLED and settings.DISCORD_WEBHOOK_URL:
     active_channels.append(DiscordChannel())
-if settings.TELEGRAM_ENABLED and settings.TELEGRAM_BOT_TOKEN and settings.TELEGRAM_CHAT_ID:
+if settings.TELEGRAM_ENABLED and settings.TELEGRAM_BOT_TOKEN:
     active_channels.append(TelegramChannel())
 if settings.WHATSAPP_ENABLED:
     active_channels.append(WhatsAppChannel())
@@ -138,6 +138,13 @@ async def lifespan(app: FastAPI):
     if settings.CLARITY_ENABLED:
         scheduler.add_job(scheduled_clarity_check, "interval", minutes=settings.CLARITY_CHECK_INTERVAL_MINUTES)
     
+    # Auto-discover Telegram subscribers who send /start every 15 seconds
+    telegram_ch = next((c for c in active_channels if isinstance(c, TelegramChannel)), None)
+    if telegram_ch:
+        scheduler.add_job(telegram_ch.sync_subscribers, "interval", seconds=15)
+        # Run once immediately on startup
+        asyncio.create_task(telegram_ch.sync_subscribers())
+    
     # Daily report at 09:00 UTC
     scheduler.add_job(generate_and_dispatch_periodic_report, "cron", hour=9, minute=0)
 
@@ -182,6 +189,21 @@ async def trigger_manual_report(background_tasks: BackgroundTasks):
     """Manually triggers the daily health and statistics report."""
     background_tasks.add_task(generate_and_dispatch_periodic_report)
     return {"status": "report_triggered"}
+
+
+@app.post("/api/v1/subscribers/whatsapp", tags=["Subscriptions"])
+async def add_whatsapp_subscriber(payload: Dict[str, str]):
+    """Dynamically register a WhatsApp recipient phone without hardcoding in .env."""
+    phone = payload.get("phone")
+    if not phone:
+        raise HTTPException(status_code=400, detail="El campo 'phone' es obligatorio (ej. +56912345678)")
+
+    whatsapp_ch = next((c for c in active_channels if isinstance(c, WhatsAppChannel)), None)
+    if not whatsapp_ch:
+        raise HTTPException(status_code=400, detail="El canal de WhatsApp no esta activo")
+
+    whatsapp_ch.add_subscriber(phone)
+    return {"status": "subscribed", "phone": phone}
 
 
 @app.get("/api/v1/incidents/{incident_id}/anci-dossier", tags=["Compliance & CSIRT"])
