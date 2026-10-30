@@ -1,0 +1,45 @@
+services:
+  gma-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gma-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - AUDIT_LOG_PATH=/app/audit_logs/incidents.jsonl
+    volumes:
+      - ./audit_logs:/app/audit_logs:rw
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - gma-network
+
+  # Optional local offline LLM service (Ollama)
+  # Run with: docker compose --profile ai up -d
+  ollama:
+    image: ollama/ollama:latest
+    container_name: gma-dev-ollama
+    profiles: ["ai"]
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - gma-network
+
+volumes:
+  ollama_data:
+
+networks:
+  gma-network:
+    driver: bridge
