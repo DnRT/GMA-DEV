@@ -1,112 +1,104 @@
 # GMA-DEV (Get My Alert, Developer)
 
 > **Enterprise-grade, privacy-first ChatOps & Incident Monitoring System.**  
-> Built for SysAdmins and DevOps teams managing mission-critical web services with automated notifications via **Discord**, **Telegram**, and **WhatsApp**.
+> Diseñado para SysAdmins, DevOps y equipos de desarrollo que gestionan servicios web de misión crítica, unificando telemetría técnica, analítica UX de Microsoft Clarity y despacho multicanal en **Discord**, **Telegram** y **WhatsApp**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Security by Design](https://img.shields.io/badge/Security-Ley_21.663_Compliant-green.svg)](SECURITY.md)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
 [![Terraform](https://img.shields.io/badge/IaC-Terraform_GCP_%7C_AWS_%7C_Azure-7B42BC?logo=terraform&logoColor=white)](infra/terraform/)
+[![CI Pipeline](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 
 ---
 
-## 🏛️ Visión General & Cumplimiento Normativo (Chile & Global)
+## 🎯 ¿Qué es GMA-DEV y qué problema resuelve?
 
-**GMA-DEV** (*Get My Alert, Developer*) está diseñado bajo el principio estricto de **Seguridad por Defecto y por Diseño (*Security by Design*)**, cumpliendo de forma nativa con los marcos legales vigentes y proyectados:
+En la gestión de servicios web modernos (e-commerce, SaaS, APIs y portales corporativos), los equipos suelen enfrentarse a tres problemas críticos:
 
-1. **Ley Marco de Ciberseguridad (Ley Nº 21.663 - Chile):**
-   - **Trazabilidad inmutable:** Registro local de auditoría en formato JSON con marcas de tiempo en UTC (`ISO 8601`) para reportes ante la ANCI y CSIRT.
-   - **Principio de Mínimo Privilegio:** Ejecución sin privilegios de `root` en contenedores y control estricto de llamadas API.
-2. **Ley sobre Delitos Informáticos (Ley Nº 21.459 - Chile / Convenio de Budapest):**
-   - Telemetría legítima y no invasiva de endpoints autorizados.
-   - Prevención de abuso de dispositivos e inyección de comandos.
-3. **Nueva Ley de Protección de Datos Personales (Chile) y GDPR (UE):**
-   - **Pipeline de Sanitización Activa:** Enmascara automáticamente antes de notificar:
-     - RUT chileno (`XX.XXX.XXX-X`)
-     - Correos electrónicos y tarjetas de crédito
-     - Tokens de sesión, JWT, Authorization Bearer, Passwords y API Keys
-     - Direcciones IP públicas de usuarios finales
-   - **Alerta por Puntero (Pointer Alerts):** Solo se despachan resúmenes técnicos abstractos a plataformas de terceros (Discord, Telegram, WhatsApp), evitando la fuga transfronteriza de datos personales.
+1. **Monitoreo fragmentado y ciego al usuario:** Las herramientas tradicionales de uptime solo verifican si el servidor devuelve HTTP 200, pero no detectan si el frontend está inutilizable (botones rotos, pasarelas de pago colgadas o errores de scripts de cliente). GMA-DEV conecta **Microsoft Clarity** con el monitoreo de infraestructura para alertar cuando los usuarios sufren *rage clicks* o bloqueos en la interfaz.
+2. **Riesgo legal y fuga de PII en mensajería:** Enviar trazas de error sin filtrar a canales de chat de terceros (Discord, Telegram, WhatsApp) viola directamente las leyes de protección de datos personales (GDPR y la Nueva Ley de Protección de Datos en Chile) y los marcos de ciberseguridad (Ley Nº 21.663). GMA-DEV incluye un **motor mandatorio de sanitización** que enmascara RUTs, correos, IPs públicas y credenciales antes de que salgan a internet.
+3. **Punto único de fallo en la observabilidad:** Si la herramienta de alertas depende de un solo proveedor o cae Cloudflare/DNS, el equipo queda a ciegas. GMA-DEV está preparado para ejecutarse de forma **híbrida y redundante** (local en Docker y en nubes como GCP, AWS o Azure con Terraform).
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## 🏗️ Arquitectura General
 
 ```mermaid
 flowchart TD
-    subgraph Fuentes ["Fuentes de Telemetría"]
-        A1["Microsoft Clarity API\n(Dead clicks, Rage clicks, UX errors)"]
-        A2["Web Services & APIs\n(Healthchecks, Latency, Status 5xx)"]
-        A3["Sistemas Externos / Webhooks\n(Prometheus / Uptime / Sentry)"]
+    subgraph Ingesta ["1. Telemetría & Fuentes"]
+        A1["Microsoft Clarity API\n(Rage Clicks, Dead Clicks, JS Errors)"]
+        A2["Proactive Healthchecks\n(Latencia, Códigos HTTP, SLAs)"]
+        A3["Webhooks Entrantes\n(Grafana, Prometheus, Sentry)"]
     end
 
-    subgraph Core ["GMA-DEV Core (Local o Multi-Cloud)"]
-        B1["Ingesta & Evaluador de Incidentes"]
-        B2["Pipeline de Sanitización & PII Masking\n(RUT, IPs, Tokens)"]
-        B3["Audit Logger Inmutable (UTC / JSON)\n[Ley 21.663]"]
-        B4["Motor de Plugins / Extensibilidad\n(AI Enricher: Ollama / OpenAI / Gemini)"]
+    subgraph Core ["2. GMA-DEV Core Engine"]
+        B1["Pipeline de Sanitización Activa\n[Enmascara RUT, IPs, Tokens, Emails]"]
+        B2["Audit Logger Inmutable UTC (JSONL)\n[Cumplimiento Ley 21.663 ANCI]"]
+        B3["Motor de Plugins Extensible\n(AI Triage: Ollama / Gemini / OpenAI)"]
     end
 
-    subgraph Canales ["Despacho Multicanal Seguro (TLS 1.3)"]
-        C1["Discord (Rich Embeds & Color Status)"]
-        C2["Telegram (Bot API & Alertas Operativas)"]
-        C3["WhatsApp (Meta Cloud API / Twilio Gateway)"]
+    subgraph Canales ["3. Canales de Notificación (TLS 1.3)"]
+        C1["Discord\n(Rich Embeds & Códigos de Color)"]
+        C2["Telegram\n(Bot API HTML para Móvil)"]
+        C3["WhatsApp\n(Meta Cloud API / Twilio Gateway)"]
     end
 
     A1 --> B1
     A2 --> B1
     A3 --> B1
     B1 --> B2
-    B2 --> B3
-    B2 --> B4
-    B4 --> C1
-    B4 --> C2
-    B4 --> C3
+    B1 --> B3
+    B3 --> C1
+    B3 --> C2
+    B3 --> C3
 ```
 
 ---
 
-## 🚀 Despliegue Multi-Cloud & Resiliencia
+## 📚 Índice de Documentación Detallada
 
-GMA-DEV soporta despliegue redundante e híbrido para evitar caídas ante fallos de proveedores de DNS o Cloudflare:
+Para facilitar la adopción e implementación en cualquier entorno, la documentación completa se divide en guías especializadas:
 
-| Entorno | Método de Despliegue | Ubicación de Configuración |
+| Área | Documento | Descripción |
 | :--- | :--- | :--- |
-| **Local / Bare Metal** | Docker & Docker Compose | [`docker-compose.yml`](docker-compose.yml) |
-| **GCP (Google Cloud)** | Terraform (Cloud Run + Secret Manager) | [`infra/terraform/gcp/`](infra/terraform/gcp/) |
-| **AWS** | Terraform (ECS Fargate + Secrets Manager) | [`infra/terraform/aws/`](infra/terraform/aws/) |
-| **Azure** | Terraform (Container Apps + Key Vault) | [`infra/terraform/azure/`](infra/terraform/azure/) |
+| **Configuración de Canales** | [Guía de Canales de Chat](docs/setup/channels.md) | Paso a paso desde cero para crear el bot de Telegram (@BotFather), Webhooks de Discord y la API de Meta para WhatsApp. |
+| **Fuentes de Telemetría** | [Telemetría & Microsoft Clarity](docs/setup/telemetry-clarity.md) | Cómo obtener las claves de Microsoft Clarity, umbrales de UX y monitoreo HTTP proactivo. |
+| **Despliegue Local** | [Despliegue Local con Docker](docs/setup/deployment-local-docker.md) | Configuración con Docker Compose, variables de entorno y perfil de IA local. |
+| **Google Cloud (GCP)** | [Despliegue en GCP con Terraform](docs/cloud/gcp-terraform.md) | Despliegue en Google Cloud Run v2 (Santiago `southamerica-west1`), Secret Manager y Cloud Scheduler. |
+| **Amazon Web Services (AWS)** | [Despliegue en AWS con Terraform](docs/cloud/aws-deployment.md) | Despliegue en AWS ECS Fargate con Secrets Manager y roles IAM de mínimo privilegio. |
+| **Microsoft Azure** | [Despliegue en Azure](docs/cloud/azure-deployment.md) | Despliegue en Azure Container Apps con Log Analytics y variables protegidas. |
+| **Extensibilidad & IA** | [Plugins & Enriquecimiento IA](docs/extensibility/plugins-and-ai.md) | Creación de plugins personalizados e integración con Ollama (offline), Gemini o OpenAI. |
+| **Marco Legal & Seguridad** | [Seguridad y Cumplimiento Normativo](SECURITY.md) | Detalle de cumplimiento con Ley 21.663, Ley 21.459 y estándares GDPR. |
 
 ---
 
-## ⚡ Inicio Rápido (Docker Local)
+## ⚡ Inicio Rápido en 3 Pasos (Docker)
 
-### 1. Clonar y configurar variables de entorno
+### 1. Clonar el repositorio
 ```bash
 git clone https://github.com/DnRT/GMA-DEV.git
 cd GMA-DEV
+```
+
+### 2. Configurar variables de entorno
+```bash
 cp .env.example .env
 ```
+Edita `.env` con las credenciales de los canales que desees activar (revisa la [Guía de Canales](docs/setup/channels.md)).
 
-Edita `.env` con tus tokens de Discord, Telegram, WhatsApp y Clarity.
-
-### 2. Levantar con Docker Compose
+### 3. Levantar el servicio
 ```bash
+# Modo estándar:
 docker compose up -d --build
+
+# Modo con Inteligencia Artificial Local (Ollama):
+docker compose --profile ai up -d --build
 ```
 
-El servicio iniciará los monitores programados y expondrá la API de webhooks en `http://localhost:8080`.
+El servicio iniciará los monitores programados y expondrá la API de webhooks en `http://localhost:8080/healthz`.
 
 ---
 
-## 🧩 Plugins & Extensibilidad con Inteligencia Artificial
-
-GMA-DEV incluye un plugin modular de enriquecimiento con IA (`AIEnricherPlugin`):
-* **Ollama (100% Local y Offline):** Analiza logs y anomalías sin enviar datos fuera de tu red privada.
-* **Google Gemini / OpenAI:** Opcional para generar resúmenes ejecutivos matutinos del estado de salud web.
-
----
-
-## 📜 Licencia y Seguridad
-* Licencia: [MIT](LICENSE)
-* Políticas de seguridad y cumplimiento legal: [SECURITY.md](SECURITY.md)
+## ⚖️ Licencia
+Distribuido bajo la **Licencia MIT**. Consulta el archivo [`LICENSE`](LICENSE) para más detalles.  
+Copyright (c) 2026 Eugenio Cortés.
