@@ -1,5 +1,5 @@
 # ==============================================================================
-# OpsSentinel - Secure Multi-Stage Dockerfile
+# GMA-DEV - Secure Multi-Stage Dockerfile
 # Compliant with CIS Docker Benchmark & Chilean Ley 21.663 (Non-root execution)
 # ==============================================================================
 
@@ -11,30 +11,33 @@ WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 
-# Stage 2: Minimal Distroless / Hardened Runtime
+# Stage 2: Hardened Runtime
 FROM python:3.11-slim AS runtime
 
 WORKDIR /app
 
-# Install curl for container healthcheck
+# Install curl for container healthcheck probe
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy installed site-packages and binaries from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Security: Create non-root system user and group (Ley 21.663 compliance)
 RUN groupadd -g 10001 appgroup && \
     useradd -u 10001 -g appgroup -s /bin/sh -d /app appuser
 
-# Copy installed dependencies from builder
-COPY --from=builder /root/.local /home/appuser/.local
-ENV PATH=/home/appuser/.local/bin:$PATH
+# Environment: Enable unbuffered logs and set root PYTHONPATH
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1
 
 # Prepare app directories and permissions
 RUN mkdir -p /app/audit_logs && \
