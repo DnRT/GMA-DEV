@@ -62,6 +62,9 @@ audit_logs/*.jsonl
 
 # IDEs
 .idea/
-.vscode/
 *.swp
 *.swo
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
