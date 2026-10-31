@@ -12,7 +12,7 @@
 [![Microsoft Clarity](https://img.shields.io/badge/Telemetry-Microsoft_Clarity_API-0078D4)](docs/setup/telemetry-clarity.md)
 
 <p align="center">
-  <strong>GMA-DEV</strong> es un framework integral de observabilidad y respuesta a incidentes diseñado para SysAdmins, DevOps y Tech Leads. Unifica el monitoreo proactivo de uptime, la detección de fricción UX en tiempo real con <strong>Microsoft Clarity</strong> y el despacho multicanal seguro en <strong>Discord</strong>, <strong>Telegram</strong> y <strong>WhatsApp</strong>, incorporando sanitización mandatoria de datos personales (PII) y generación automatizada de <strong>Expedientes Técnicos y Dossiers en PDF</strong> listos para auditorías o notificación a autoridades (Ley Nº 21.663 / ANCI / CSIRT).
+  <strong>GMA-DEV</strong> es una herramienta backend y headless de observabilidad y respuesta a incidentes diseñada para SysAdmins, DevOps y Tech Leads. Al no requerir un frontend propietario, centraliza la interacción donde el equipo ya opera: despacho multicanal seguro en <strong>Discord</strong>, <strong>Telegram</strong> y <strong>WhatsApp</strong>, ingesta de telemetría UX en tiempo real con <strong>Microsoft Clarity</strong>, sanitización mandatoria de datos personales (PII) y generación al vuelo de <strong>Expedientes Técnicos y Dossiers en PDF</strong> listos para auditorías o notificación a autoridades (Ley Nº 21.663 / ANCI / CSIRT).
 </p>
 
 </div>
