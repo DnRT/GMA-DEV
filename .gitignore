@@ -33,8 +33,6 @@ env/
 ENV/
 
 # Secrets & Environment variables
-.env
-.env.local
 .env.*.local
 *.pem
 *.key
@@ -68,3 +66,5 @@ branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
 .gitignore
+config.bat
+node_modules
